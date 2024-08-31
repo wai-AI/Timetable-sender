@@ -1,4 +1,5 @@
 from aiogram.types import (InlineKeyboardButton, InlineKeyboardMarkup)
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 def StartKeyboard():
     kb = [
@@ -9,30 +10,30 @@ def StartKeyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb)
     return keyboard
 
-def AdminKeyboard():
+def AdminKeyboard(group_id: int):
     kb = [
-        [InlineKeyboardButton(text="📜 Додати розклад", callback_data='AddTimetable')],
-        [InlineKeyboardButton(text="🔗 Завантажити посилання на пару", callback_data='PushLink')],
-        [InlineKeyboardButton(text="📩 Ввести пошти викладачів", callback_data='EnterEmails')]
+        [InlineKeyboardButton(text="📜 Додати розклад", callback_data=f'AddTimetable_{group_id}')],
+        [InlineKeyboardButton(text="🔗 Завантажити посилання на пару", callback_data=f'PushLink_{group_id}')],
+        [InlineKeyboardButton(text="📩 Ввести пошти викладачів", callback_data=f'EnterEmails_{group_id}')]
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb)
     return keyboard
 
-def DaysKeyboard(week: str, arg: str, type_user: str) -> InlineKeyboardMarkup:
+def DaysKeyboard(week: str, arg: str, type_user: str, group_id: int) -> InlineKeyboardMarkup:
     kb = [
-        [InlineKeyboardButton(text="1️⃣ Понеділок", callback_data=f'Monday_{week}_{type_user}')],
-        [InlineKeyboardButton(text="2️⃣ Вівторок", callback_data=f'Tuesday_{week}_{type_user}')],
-        [InlineKeyboardButton(text="3️⃣ Середа", callback_data=f'Wednesday_{week}_{type_user}')],
-        [InlineKeyboardButton(text="4️⃣ Четвер", callback_data=f'Thursday_{week}_{type_user}')],
-        [InlineKeyboardButton(text="5️⃣ П'ятниця", callback_data=f'Friday_{week}_{type_user}')],
+        [InlineKeyboardButton(text="1️⃣ Понеділок", callback_data=f'Monday_{week}_{type_user}_{group_id}')],
+        [InlineKeyboardButton(text="2️⃣ Вівторок", callback_data=f'Tuesday_{week}_{type_user}_{group_id}')],
+        [InlineKeyboardButton(text="3️⃣ Середа", callback_data=f'Wednesday_{week}_{type_user}_{group_id}')],
+        [InlineKeyboardButton(text="4️⃣ Четвер", callback_data=f'Thursday_{week}_{type_user}_{group_id}')],
+        [InlineKeyboardButton(text="5️⃣ П'ятниця", callback_data=f'Friday_{week}_{type_user}_{group_id}')],
         [InlineKeyboardButton(text="◀️ Назад", callback_data=f"Back_{arg}_{type_user}")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
-def WeeksKeyboard(arg: str, type_user: str) -> InlineKeyboardMarkup:
+def WeeksKeyboard(arg: str, type_user: str, group_id: int) -> InlineKeyboardMarkup:
     kb = [
-        [InlineKeyboardButton(text="🔋 Верхній тиждень", callback_data=f'Top_Week_{type_user}')],
-        [InlineKeyboardButton(text="🪫 Нижній тиждень", callback_data=f'Lower_Week_{type_user}')],
+        [InlineKeyboardButton(text="🔋 Верхній тиждень", callback_data=f'Top_Week_{type_user}_{group_id}')],
+        [InlineKeyboardButton(text="🪫 Нижній тиждень", callback_data=f'Lower_Week_{type_user}_{group_id}')],
         [InlineKeyboardButton(text="◀️ Назад", callback_data=f"Back_{arg}_{type_user}")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
