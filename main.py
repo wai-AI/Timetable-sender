@@ -24,6 +24,7 @@ from keyboards.keyboard import(
 
 from filters.chat_type import ChatTypeFilter
 
+from aiogram.methods import LeaveChat
 from aiogram.methods import SendMessage
 from aiogram.types import FSInputFile, BufferedInputFile
 from aiogram import Bot, Dispatcher, F, Router, html
@@ -41,6 +42,7 @@ cursor = conn.cursor()
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS KNEU (
     id                        INTEGER UNIQUE,
+    chat_name                 TEXT,  
     timetable_monday_lower    TEXT    DEFAULT [Розкладу на понеділок нижнього тижня ще немає],
     timetable_tuesday_lower   TEXT    DEFAULT [Розкладу на вівторок нижнього тижня ще немає],
     timetable_wednesday_lower TEXT    DEFAULT [Розкладу на середу нижнього тижня ще немає],
@@ -72,7 +74,6 @@ class Form(StatesGroup): #Клас зі стейтами
 with open('settings.json', 'r') as json_file: #Вигрузка з конфігу та визначення змінних
     config = json.load(json_file)
 TOKEN = config['TOKEN']
-TIME = config['TIME']
 
 def telegraph_file_upload(path_to_file):  #Завантаження медіа на телеграф
     '''
@@ -174,7 +175,7 @@ async def DownloadingPhotos(message: Message) -> tuple[str, str]:
         user_id = message.from_user.id
         file_id = message.photo[-1].file_id
         file_info = await message.bot.get_file(file_id)
-        path = "C:\\Users\\trepi\\Desktop\\Coding\\Timetable-sender\\pic\\picture.png"
+        path = "C:\\Users\\Pavel\\Desktop\\Homework\\Codes\\Python\\Timetable-sender\\pic\\picture.png"
         await message.bot.download_file(file_info.file_path, destination=path)
 
         return path
@@ -206,13 +207,17 @@ async def AdminMessage(message: Message) -> None:
 async def configure_selected_group(call: CallbackQuery, state: FSMContext):
     await call.message.delete()
     group_id = int(call.data.split("_")[-1])
+    cursor.execute("""SELECT chat_name FROM KNEU WHERE id = ?""", (group_id,))
+    res = cursor.fetchone()
+    chat_name = res[0]
+
     await state.update_data(selected_group=group_id)
     
-    await call.message.answer(f"Ви обрали групу {group_id}. Тепер ви можете виконувати налаштування.", reply_markup=AdminKeyboard(group_id))
+    await call.message.answer(f"Ви обрали групу <b>{chat_name}</b>. Тепер ви можете виконувати налаштування.", reply_markup=AdminKeyboard(group_id))
 
 @form_router.message(Command("configure"), ChatTypeFilter(chat_type = ["group", "supergroup"]))
 async def AdminMessage(message: Message) -> None:
-    await message.answer("Налаштування боту доступне лише в приватних повідомленнях. Будь ласка, перейдіть до чату з ботом та повторіть дану команду")
+    await message.answer("Налаштування боту доступне лише в приватних повідомленнях. Будь ласка, перейдіть до чату з ботом та повторіть цю команду")
 
 @form_router.message(CommandStart(), ChatTypeFilter(chat_type = ["group", "supergroup"]))
 async def StartMessage(message: Message, state: FSMContext) -> None:
@@ -247,28 +252,32 @@ async def ConfirmAdd(call: CallbackQuery, state: FSMContext) -> None:
     await state.update_data(GroupId=id_chat)
     await call.message.answer('''Вашу групу успішно додано до бази. Тепер оберіть людину, яка буде наповнювати мене актуальною інформацією про розклад занять, посилання на пари та пошти викладачів''', reply_markup=ChooseAdmin_kb())
 
+@form_router.callback_query(lambda call: call.data == 'Cancel')
+async def decline_add(call: CallbackQuery) -> None:
+    chat_id = call.message.chat.id
+    await call.message.delete()
+    await call.message.answer("""Вас зрозумів 🫡\nЯк знадоблюся - Ви завжди можете додати мене назад до чату""")
+    await call.bot.leave_chat(chat_id)
+
+
 @form_router.callback_query(lambda call: call.data == 'YesIAm')
 async def ChooseAdmin(call: CallbackQuery) -> None:
     await call.message.delete()
     id_user = call.from_user.id
+    admin_user_name = call.from_user.full_name
     id_group = call.message.chat.id
     print(id_user)
 
     cursor.execute('''UPDATE KNEU SET admin_group = ? WHERE id = ?''', (id_user, id_group,))
     conn.commit()
 
-    await call.message.answer("Вітаю, адміністратора обрано. Перейдіть до мене в особисті повідомлення та відправте команду /configure")
+    await call.message.answer(f"Вітаю, адміністратора обрано (<b>{admin_user_name}</b>). Перейдіть до мене в особисті повідомлення та відправте команду /configure")
     await call.bot.send_message(id_user, "Вітаю, тепер ви - адміністратор. Для налаштування бота введіть команду /configure")
 
 @form_router.callback_query(F.data.startswith('AddTimetable_'))
 async def SetTimetable(call: CallbackQuery, state: FSMContext) -> None:
-    """data = await state.get_data()
-    group_id = state.set_data("selected_group")"""
-
     parts = call.data.split('_')
     _, group_id = parts
-
-    print(group_id)
 
     await call.message.delete()
     await call.message.answer("Оберіть тиждень", reply_markup=WeeksKeyboard('MainMenu', 'Admin', group_id))
@@ -335,8 +344,12 @@ async def SetMondayTimetable(call: CallbackQuery, state: FSMContext) -> None:
             else:
                 await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на понеділок верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
 
-@form_router.message(F.photo, Form.MondayTimetable)
+@form_router.message(Form.MondayTimetable)
 async def SetMonday(message: Message, state: FSMContext) -> None:
+    if not message.photo:
+        await message.answer("Будь ласка, надішліть розклад як фото, а не як файл")
+        return
+    
     path = await DownloadingPhotos(message)
     
     data = await state.get_data()
@@ -399,8 +412,11 @@ async def SetTuesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
             else:
                 await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на вівторок верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
 
-@form_router.message(F.photo, Form.TuesdayTimetable)
+@form_router.message(Form.TuesdayTimetable)
 async def SetTuesday(message: Message, state: FSMContext) -> None:
+    if not message.photo:
+        await message.answer("Будь ласка, надішліть розклад як фото, а не як файл")
+        return
     path = await DownloadingPhotos(message)
     
     data = await state.get_data()
@@ -463,8 +479,11 @@ async def SetWednesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
             else:
                 await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на середу верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
 
-@form_router.message(F.photo, Form.WednesdayTimetable)
+@form_router.message(Form.WednesdayTimetable)
 async def SetWednesday(message: Message, state: FSMContext) -> None:
+    if not message.photo:
+        await message.answer("Будь ласка, надішліть розклад як фото, а не як файл")
+        return
     path = await DownloadingPhotos(message)
     
     data = await state.get_data()
@@ -527,8 +546,11 @@ async def SetThursdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
             else:
                 await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на четвер верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
 
-@form_router.message(F.photo, Form.ThursdayTimetable)
+@form_router.message(Form.ThursdayTimetable)
 async def SetThursday(message: Message, state: FSMContext) -> None:
+    if not message.photo:
+        await message.answer("Будь ласка, надішліть розклад як фото, а не як файл")
+        return
     path = await DownloadingPhotos(message)
     
     data = await state.get_data()
@@ -591,8 +613,11 @@ async def SetFridayTimetable(call: CallbackQuery, state: FSMContext) -> None:
             else:
                 await call.message.answer(f"<a href='{timetable}'> </a><b>Розклад на п'ятницю верхнього тижня</b>", reply_markup=BackKb('WeekSelection', 'User'))
 
-@form_router.message(F.photo, Form.FridayTimetable)
+@form_router.message(Form.FridayTimetable)
 async def SetFriday(message: Message, state: FSMContext) -> None:
+    if not message.photo:
+        await message.answer("Будь ласка, надішліть розклад як фото, а не як файл")
+        return
     path = await DownloadingPhotos(message)
     
     data = await state.get_data()
@@ -627,9 +652,14 @@ async def SetLinks(call: CallbackQuery, state: FSMContext) -> None:
 
 @form_router.message(Form.Links)
 async def CheckLinks(message: Message, state: FSMContext) -> None:
+    if not message.text:
+        await message.answer("Будь ласка, надішліть список предметів та посилань на їх пари в форматі:\n\nДисципліна1 - Посилання1\nДисципліна2 - Посилання2")
+        return
     id_user = message.from_user.id
     data = await state.get_data()
     id_group = data.get("id_group")
+
+    print(id_group)
 
     if not id_group:
         await message.answer("Сталася помилка: не вдалося визначити ідентифікатор групи")
@@ -645,6 +675,7 @@ async def CheckLinks(message: Message, state: FSMContext) -> None:
             cursor.execute("""UPDATE KNEU SET lessons = ? WHERE id = ?""", (text_message, id_group,))
             conn.commit()
             await message.answer("Посилання на пари успішно збережені")
+            await message.answer(formatted_message)
             await message.answer("Оберіть дію", reply_markup=AdminKeyboard(id_group))
         except Exception as e:
             await message.answer(f"Сталася помилка при збереженні даних: <code>{str(e)}</code>")
@@ -663,6 +694,9 @@ async def SetEmails(call: CallbackQuery, state: FSMContext) -> None:
 
 @form_router.message(Form.Emails)
 async def CheckEmails(message: Message, state: FSMContext) -> None:
+    if not message.text:
+        await message.answer("Будь ласка, надішліть список предметів та посилань на їх пари в форматі:\n\nДисципліна1 - Пошта1\nДисципліна2 - Пошта2")
+        return
     text_message = message.text
 
     id_user = message.from_user.id
@@ -740,7 +774,7 @@ async def Back(call: CallbackQuery, state: FSMContext) -> None:
     elif action == "MainMenu":
         await state.clear()
         if type_user == 'Admin':
-            await call.message.answer("Ви повернулись у головне меню", reply_markup=AdminKeyboard())
+            await call.message.answer("Ви повернулись у головне меню", reply_markup=AdminKeyboard(group_id))
         elif type_user == 'User':
             await call.message.answer("Ви повернулись у головне меню", reply_markup=StartKeyboard())
 
