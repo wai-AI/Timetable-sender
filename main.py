@@ -237,7 +237,7 @@ async def StartMessage(message: Message, state: FSMContext) -> None:
 
 @form_router.message(CommandStart(), ChatTypeFilter(chat_type = ["private"]))
 async def CancelStart(message: Message):
-    await message.answer("Дана команда працює лише в групових чатах")
+    await message.answer("Вітаю! Для того, щоб мати змогу працювати зі мною - додайте мене до Вашої групи та введіть ще раз команду /start в груповому чаті")
 
 @form_router.callback_query(lambda call: call.data == 'Confirm')
 async def ConfirmAdd(call: CallbackQuery, state: FSMContext) -> None:
