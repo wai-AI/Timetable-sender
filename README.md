@@ -46,7 +46,9 @@ python main.py
 ## 🤖 Main Bot Commands
 
 ```/start```- Start interacting with the bot. Displays a welcome message. Works only in groups.
+
 ```/configure``` - Command for administrators. Opens the bot settings menu. Works only in private messages.
+
 ```/help``` - Help command. Displays documentation for bots' using.
 
 ## 👑 Administrator Interaction
