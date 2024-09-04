@@ -15,39 +15,39 @@ This Telegram bot is designed to assist students by providing easy access to up-
 
 **First step:** Clone the Repository
 
-<code>
+```
 git clone https://github.com/wai-AI/Timetable-sender.git
 cd Timetable-sender
-</code>
+```
 
 **Second step:** Install Dependencies
 
-<code>
+```
 pip install -r requirements.txt
-</code>
+```
 
 **Third step:** Bot Configuration
 
 Create a bot through BotFather and obtain the token.
 Create a .json file in the project's root directory and add your token:
 
-<code>
+```
 {
 "BOT_TOKEN" : "your_bot_token_here"
 }
-</code>
+```
 
 **Fourth step:** Run the Bot
 
-<code>
+```
 python main.py
-</code>
+```
 
 ## 🤖 Main Bot Commands
 
-<code>/start</code> - Start interacting with the bot. Displays a welcome message. Works only in groups.
-<code>/configure</code> - Command for administrators. Opens the bot settings menu. Works only in private messages.
-<code>/help</code> - Help command. Displays documentation for bots' using.
+```/start```- Start interacting with the bot. Displays a welcome message. Works only in groups.
+```/configure``` - Command for administrators. Opens the bot settings menu. Works only in private messages.
+```/help``` - Help command. Displays documentation for bots' using.
 
 ## 👑 Administrator Interaction
 
