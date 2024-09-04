@@ -54,13 +54,17 @@ python main.py
 ## 👑 Administrator Interaction
 
 **Add the Bot to a Group:** Add the bot to the group where you want to display timetaable, emails and links.
+
 **Work with bot in a group:** Enter <code>/start</code> command to the group chat and following to the bots' instructions.
+
 **Bots' configure:** Go to private messages to the bot and enter the <code>/configure</code> command.
+
 **Documentation:** If you are needing any help with bot - you can send a <code>/help</code> command and read documentation.
 
 ## 👥 Author
 
 **Name:** Ivan - Pavlo
+
 **T.me:** @Zakhiel
 
 ## ⚖️ Licence
