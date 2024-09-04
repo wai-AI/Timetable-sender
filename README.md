@@ -1,4 +1,4 @@
-﻿# KNEU sender
+﻿# 🤖 KNEU sender
 
 ## ✅ Introduction
 
