@@ -850,62 +850,71 @@ async def Back(call: CallbackQuery, state: FSMContext) -> None:
 
 @form_router.callback_query(F.data.startswith("ChangeAdmin_"))
 async def ChangeAdmin(call: CallbackQuery, state: FSMContext):
-    parts = call.data.split('_')
-    _, group_id = parts
+    try:
+        parts = call.data.split('_')
+        _, group_id = parts
 
-    print(group_id)
+        print(group_id)
 
-    await call.message.delete()
-    await state.update_data(group_id=group_id)
+        await call.message.delete()
+        await state.update_data(group_id=group_id)
 
-    await state.set_state(Form.ChangeAdmin)
-    await call.message.answer("Перешліть повідомлення від користувача, якого Ви хочете назначити адміністратором", reply_markup=BackKb('MainMenu', 'Admin', group_id))
+        await state.set_state(Form.ChangeAdmin)
+        await call.message.answer("Перешліть повідомлення від користувача, якого Ви хочете назначити адміністратором", reply_markup=BackKb('MainMenu', 'Admin', group_id))
+    except Exception as e:
+        await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 29</b>. Задля її усунення зверніться будь ласка до @Zakhiel")        
+
 
 @form_router.message(Form.ChangeAdmin)
 async def ConfirmChangeAdmin(message: Message, state: FSMContext):
-    if not message.forward_from:
-        await message.answer("Це повідомлення не є форвардом від користувача. Будь ласка, перешліть повідомлення від користувача")
-        return
+    try:
+        if not message.forward_from:
+            await message.answer("Це повідомлення не є форвардом від користувача. Будь ласка, перешліть повідомлення від користувача")
+            return
 
-    if message.forward_from.is_bot or message.forward_from.id <= 0:
-        await message.answer("Це повідомлення переслане не від користувача. Будь ласка, перешліть повідомлення від користувача")
-        return
-    
-    id_user = message.forward_from.id
-    name_user = message.forward_from.full_name
-    data = await state.get_data()
-    id_group = data.get("group_id")
-    
-    await state.update_data(id_new_admin=id_user)
+        if message.forward_from.is_bot or message.forward_from.id <= 0:
+            await message.answer("Це повідомлення переслане не від користувача. Будь ласка, перешліть повідомлення від користувача")
+            return
+        
+        id_user = message.forward_from.id
+        name_user = message.forward_from.full_name
+        data = await state.get_data()
+        id_group = data.get("group_id")
+        
+        await state.update_data(id_new_admin=id_user)
 
-    await message.answer(f"Ви точно впевнені, що бажаєте передати права адміністратора користувачу <b>{name_user}</b>?", 
-                         reply_markup=ChangeAdminConfirmation(id_group))
+        await message.answer(f"Ви точно впевнені, що бажаєте передати права адміністратора користувачу <b>{name_user}</b>?", 
+                            reply_markup=ChangeAdminConfirmation(id_group))
+    except Exception as e:
+        await message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 30</b>. Задля її усунення зверніться будь ласка до @Zakhiel")        
 
 @form_router.callback_query(F.data.startswith("ConfirmChange_") | F.data.startswith("CancelChange_"))
 async def GoodChangeAdmin(call: CallbackQuery, state: FSMContext):
-    parts = call.data.split('_')
-    _, id_group = parts
-    
-    await call.message.delete()
-    data = await state.get_data()
-    id_new_admin = data.get("id_new_admin")
+    try:
+        parts = call.data.split('_')
+        _, id_group = parts
+        
+        await call.message.delete()
+        data = await state.get_data()
+        id_new_admin = data.get("id_new_admin")
 
-    print(f"{id_group}, {id_new_admin}")
+        print(f"{id_group}, {id_new_admin}")
 
-    if call.data.startswith("ConfirmChange_"):
+        if call.data.startswith("ConfirmChange_"):
 
-        if id_new_admin and id_group:
-            cursor.execute('''UPDATE KNEU SET admin_group = ? WHERE id = ?''', (id_new_admin, id_group))
-            conn.commit()
-            await call.message.answer(f"Адміністратор успішно змінений. Дякую за Вашу службу 🫡")
+            if id_new_admin and id_group:
+                cursor.execute('''UPDATE KNEU SET admin_group = ? WHERE id = ?''', (id_new_admin, id_group))
+                conn.commit()
+                await call.message.answer(f"Адміністратор успішно змінений. Дякую за Вашу службу 🫡")
+            else:
+                await call.message.answer("Сталася помилка під час зміни адміністратора. Перевірте, чи є ID користувача та групи.")
         else:
-            await call.message.answer("Сталася помилка під час зміни адміністратора. Перевірте, чи є ID користувача та групи.")
-    else:
-        await call.message.answer("Скасування зміни адміністратора")
-        await call.message.answer("Повертаємося до головного меню.", reply_markup=AdminKeyboard(id_group))
+            await call.message.answer("Скасування зміни адміністратора")
+            await call.message.answer("Повертаємося до головного меню.", reply_markup=AdminKeyboard(id_group))
 
-    await state.clear()
-
+        await state.clear()
+    except Exception as e:
+        await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 31</b>. Задля її усунення зверніться будь ласка до @Zakhiel")        
 
 async def main():
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
