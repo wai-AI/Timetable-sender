@@ -14,7 +14,8 @@ def AdminKeyboard(group_id: int):
     kb = [
         [InlineKeyboardButton(text="📜 Додати розклад", callback_data=f'AddTimetable_{group_id}')],
         [InlineKeyboardButton(text="🔗 Завантажити посилання на пару", callback_data=f'PushLink_{group_id}')],
-        [InlineKeyboardButton(text="📩 Ввести пошти викладачів", callback_data=f'EnterEmails_{group_id}')]
+        [InlineKeyboardButton(text="📩 Ввести пошти викладачів", callback_data=f'EnterEmails_{group_id}')],
+        [InlineKeyboardButton(text="🤲 Передати права адміністратора", callback_data=f'ChangeAdmin_{group_id}')]
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb)
     return keyboard
@@ -34,7 +35,7 @@ def WeeksKeyboard(arg: str, type_user: str, group_id: int) -> InlineKeyboardMark
     kb = [
         [InlineKeyboardButton(text="🔋 Верхній тиждень", callback_data=f'Top_Week_{type_user}_{group_id}')],
         [InlineKeyboardButton(text="🪫 Нижній тиждень", callback_data=f'Lower_Week_{type_user}_{group_id}')],
-        [InlineKeyboardButton(text="◀️ Назад", callback_data=f"Back_{arg}_{type_user}")]
+        [InlineKeyboardButton(text="◀️ Назад", callback_data=f"Back_{arg}_{type_user}_{group_id}")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
 
@@ -52,9 +53,16 @@ def ChooseAdmin_kb():
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb)
     return keyboard
 
-def BackKb(arg: str, type_user: str):
+def BackKb(arg: str, type_user: str, group_id: int):
     kb = [
-        [InlineKeyboardButton(text="◀️ Назад", callback_data=f"Back_{arg}_{type_user}")]
+        [InlineKeyboardButton(text="◀️ Назад", callback_data=f"Back_{arg}_{type_user}_{group_id}")]
     ]
     keyboard = InlineKeyboardMarkup(inline_keyboard=kb)
     return keyboard
+
+def ChangeAdminConfirmation(group_id: int):
+    kb = [
+        [InlineKeyboardButton(text="✅ Так, передати права", callback_data=f'ConfirmChange_{group_id}'), 
+         InlineKeyboardButton(text="❌ Ні, скасувати дію", callback_data=f'CancelChange_{group_id}')]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=kb)

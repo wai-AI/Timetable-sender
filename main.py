@@ -18,7 +18,8 @@ from keyboards.keyboard import(
     WeeksKeyboard,
     ConfirmationKeyboard,
     ChooseAdmin_kb,
-    BackKb
+    BackKb,
+    ChangeAdminConfirmation
 )
 
 from filters.chat_type import ChatTypeFilter
@@ -62,10 +63,10 @@ class Form(StatesGroup): #Клас зі стейтами
     FridayTimetable = State()
 
     GroupId = State()
-
     Links = State()
-
     Emails = State()
+
+    ChangeAdmin = State()
 
 with open('settings.json', 'r') as json_file: #Вигрузка з конфігу та визначення змінних
     config = json.load(json_file)
@@ -159,12 +160,10 @@ async def DownloadingPhotos(message: Message) -> tuple[str, str]:
     if message.photo:
         file_id = message.photo[-1].file_id
         file_info = await message.bot.get_file(file_id)
-        
-        # Шлях до директорії і файлу
+
         dir_path = os.path.join(os.getcwd(), 'pic')
         path = os.path.join(dir_path, 'picture.png')
-        
-        # Створюємо директорію, якщо її немає
+
         os.makedirs(dir_path, exist_ok=True)
 
         await message.bot.download_file(file_info.file_path, destination=path)
@@ -174,7 +173,7 @@ async def DownloadingPhotos(message: Message) -> tuple[str, str]:
 
 async def get_admin_groups(user_id):
     cursor.execute('''SELECT id, chat_name FROM KNEU WHERE admin_group = ?''', (user_id,))
-    groups = cursor.fetchall()  # Повертає список кортежів (id, chat_name)
+    groups = cursor.fetchall()
     return groups
 
 @form_router.message(Command("configure"), ChatTypeFilter(chat_type=['private']))
@@ -339,7 +338,7 @@ async def SetMondayTimetable(call: CallbackQuery, state: FSMContext) -> None:
         if action == 'Lower':
             if type_user == 'Admin':
                 await state.set_state(Form.MondayTimetable)
-                await call.message.answer("Відправте розклад на понеділок нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin'))
+                await call.message.answer("Відправте розклад на понеділок нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             elif type_user == 'User':
                 id_group = call.message.chat.id
                 cursor.execute("""SELECT timetable_monday_lower FROM KNEU WHERE id = ?""", (id_group,))
@@ -347,13 +346,13 @@ async def SetMondayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 timetable = result[0]
 
                 if timetable == "Розкладу на понеділок нижнього тижня ще немає":
-                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
-                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на понеділок нижнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на понеділок нижнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
         elif action == "Top":
             if type_user == 'Admin':
                 await state.set_state(Form.MondayTimetable)
-                await call.message.answer("Відправте розклад на понеділок верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin'))
+                await call.message.answer("Відправте розклад на понеділок верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             elif type_user == 'User':
                 id_group = call.message.chat.id
                 cursor.execute("""SELECT timetable_monday_top FROM KNEU WHERE id = ?""", (id_group,))
@@ -361,9 +360,9 @@ async def SetMondayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 timetable = result[0]
 
                 if timetable == "Розкладу на понеділок верхнього тижня ще немає":
-                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
-                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на понеділок верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на понеділок верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 11</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -371,7 +370,7 @@ async def SetMondayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 async def SetMonday(message: Message, state: FSMContext) -> None:
     try:
         if not message.photo:
-            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin'))
+            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             return
         
         path = await DownloadingPhotos(message)
@@ -413,7 +412,7 @@ async def SetTuesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
         if action == 'Lower':
             if type_user == 'Admin':
                 await state.set_state(Form.TuesdayTimetable)
-                await call.message.answer("Відправте розклад на вівторок нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin'))
+                await call.message.answer("Відправте розклад на вівторок нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             elif type_user == 'User':
                 id_group = call.message.chat.id
                 cursor.execute("""SELECT timetable_tuesday_lower FROM KNEU WHERE id = ?""", (id_group,))
@@ -421,13 +420,13 @@ async def SetTuesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 timetable = result[0]
 
                 if timetable == "Розкладу на вівторок нижнього тижня ще немає":
-                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
-                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на вівторок нижнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на вівторок нижнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
         elif action == "Top":
             if type_user == 'Admin':
                 await state.set_state(Form.TuesdayTimetable)
-                await call.message.answer("Відправте розклад на вівторок верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin'))
+                await call.message.answer("Відправте розклад на вівторок верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             elif type_user == 'User':
                 id_group = call.message.chat.id
                 cursor.execute("""SELECT timetable_tuesday_top FROM KNEU WHERE id = ?""", (id_group,))
@@ -435,9 +434,9 @@ async def SetTuesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 timetable = result[0]
 
                 if timetable == "Розкладу на вівторок верхнього тижня ще немає":
-                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
-                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на вівторок верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на вівторок верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 13</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -445,7 +444,7 @@ async def SetTuesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 async def SetTuesday(message: Message, state: FSMContext) -> None:
     try:
         if not message.photo:
-            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin'))
+            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             return
         path = await DownloadingPhotos(message)
         
@@ -486,7 +485,7 @@ async def SetWednesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
         if action == 'Lower':
             if type_user == 'Admin':
                 await state.set_state(Form.WednesdayTimetable)
-                await call.message.answer("Відправте розклад на середу нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin'))
+                await call.message.answer("Відправте розклад на середу нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             elif type_user == 'User':
                 id_group = call.message.chat.id
                 cursor.execute("""SELECT timetable_wednesday_lower FROM KNEU WHERE id = ?""", (id_group,))
@@ -494,13 +493,13 @@ async def SetWednesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 timetable = result[0]
 
                 if timetable == "Розкладу на середу нижнього тижня ще немає":
-                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
-                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на середу нижнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на середу нижнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
         elif action == "Top":
             if type_user == 'Admin':
                 await state.set_state(Form.WednesdayTimetable)
-                await call.message.answer("Відправте розклад на середу верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin'))
+                await call.message.answer("Відправте розклад на середу верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             elif type_user == 'User':
                 id_group = call.message.chat.id
                 cursor.execute("""SELECT timetable_wednesday_top FROM KNEU WHERE id = ?""", (id_group,))
@@ -508,9 +507,9 @@ async def SetWednesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 timetable = result[0]
 
                 if timetable == "Розкладу на середу верхнього тижня ще немає":
-                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
-                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на середу верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на середу верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 15</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -518,7 +517,7 @@ async def SetWednesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 async def SetWednesday(message: Message, state: FSMContext) -> None:
     try:
         if not message.photo:
-            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin'))
+            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             return
         path = await DownloadingPhotos(message)
         
@@ -559,7 +558,7 @@ async def SetThursdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
         if action == 'Lower':
             if type_user == 'Admin':
                 await state.set_state(Form.ThursdayTimetable)
-                await call.message.answer("Відправте розклад на четвер нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin'))
+                await call.message.answer("Відправте розклад на четвер нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             elif type_user == 'User':
                 id_group = call.message.chat.id
                 cursor.execute("""SELECT timetable_thursday_lower FROM KNEU WHERE id = ?""", (id_group,))
@@ -567,13 +566,13 @@ async def SetThursdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 timetable = result[0]
 
                 if timetable == "Розкладу на четвер нижнього тижня ще немає":
-                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
-                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на четвер нижнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на четвер нижнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
         elif action == "Top":
             if type_user == 'Admin':
                 await state.set_state(Form.ThursdayTimetable)
-                await call.message.answer("Відправте розклад на четвер верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin'))
+                await call.message.answer("Відправте розклад на четвер верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             elif type_user == 'User':
                 id_group = call.message.chat.id
                 cursor.execute("""SELECT timetable_thursday_top FROM KNEU WHERE id = ?""", (id_group,))
@@ -581,9 +580,9 @@ async def SetThursdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 timetable = result[0]
 
                 if timetable == "Розкладу на четвер верхнього тижня ще немає":
-                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
-                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на четвер верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на четвер верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 17</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -591,7 +590,7 @@ async def SetThursdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 async def SetThursday(message: Message, state: FSMContext) -> None:
     try:
         if not message.photo:
-            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin'))
+            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             return
         path = await DownloadingPhotos(message)
         
@@ -632,7 +631,7 @@ async def SetFridayTimetable(call: CallbackQuery, state: FSMContext) -> None:
         if action == 'Lower':
             if type_user == 'Admin':
                 await state.set_state(Form.FridayTimetable)
-                await call.message.answer("Відправте розклад на п'ятницю нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin'))
+                await call.message.answer("Відправте розклад на п'ятницю нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             elif type_user == 'User':
                 id_group = call.message.chat.id
                 cursor.execute("""SELECT timetable_friday_lower FROM KNEU WHERE id = ?""", (id_group,))
@@ -640,13 +639,13 @@ async def SetFridayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 timetable = result[0]
 
                 if timetable == "Розкладу на п'ятницю нижнього тижня ще немає":
-                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
-                    await call.message.answer(f"<a href='{timetable}'> </a><b>Розклад на п'ятницю нижнього тижня</b>", reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f"<a href='{timetable}'> </a><b>Розклад на п'ятницю нижнього тижня</b>", reply_markup=BackKb('WeekSelection', 'User', id_group))
         elif action == "Top":
             if type_user == 'Admin':
                 await state.set_state(Form.FridayTimetable)
-                await call.message.answer("Відправте розклад на п'ятницю верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin'))
+                await call.message.answer("Відправте розклад на п'ятницю верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             elif type_user == 'User':
                 id_group = call.message.chat.id
                 cursor.execute("""SELECT timetable_friday_top FROM KNEU WHERE id = ?""", (id_group,))
@@ -654,9 +653,9 @@ async def SetFridayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 timetable = result[0]
 
                 if timetable == "Розкладу на п'ятницю верхнього тижня ще немає":
-                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
-                    await call.message.answer(f"<a href='{timetable}'> </a><b>Розклад на п'ятницю верхнього тижня</b>", reply_markup=BackKb('WeekSelection', 'User'))
+                    await call.message.answer(f"<a href='{timetable}'> </a><b>Розклад на п'ятницю верхнього тижня</b>", reply_markup=BackKb('WeekSelection', 'User', id_group))
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 19</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -664,7 +663,7 @@ async def SetFridayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 async def SetFriday(message: Message, state: FSMContext) -> None:
     try:
         if not message.photo:
-            await message.answer("Будь ласка, надішліть розклад як фотографію", reply_markup=BackKb('WeekSelection', 'Admin'))
+            await message.answer("Будь ласка, надішліть розклад як фотографію", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             return
         path = await DownloadingPhotos(message)
         
@@ -694,12 +693,12 @@ async def SetFriday(message: Message, state: FSMContext) -> None:
 async def SetLinks(call: CallbackQuery, state: FSMContext) -> None:
     try:
         parts = call.data.split('_')
-        _, group_id = parts
+        _, id_group = parts
 
         await state.set_state(Form.Links)
-        await state.update_data(id_group=group_id)
+        await state.update_data(id_group=id_group)
         await call.message.delete()
-        await call.message.answer("Окей. Відправте список предметів та посилань на їх пари. Будь ласка, слідуйте наступному формату:\n\nДисципліна1 - Посилання1\nДисципліна2 - Посилання2", reply_markup=BackKb('MainMenu','Admin'))
+        await call.message.answer("Окей. Відправте список предметів та посилань на їх пари. Будь ласка, слідуйте наступному формату:\n\nДисципліна1 - Посилання1\nДисципліна2 - Посилання2", reply_markup=BackKb('MainMenu','Admin', id_group))
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 21</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -707,7 +706,7 @@ async def SetLinks(call: CallbackQuery, state: FSMContext) -> None:
 async def CheckLinks(message: Message, state: FSMContext) -> None:
     try:
         if not message.text:
-            await message.answer("Будь ласка, надішліть список предметів та посилань на їх пари в форматі:\n\nДисципліна1 - Посилання1\nДисципліна2 - Посилання2", reply_markup=BackKb('MainMenu','Admin'))
+            await message.answer("Будь ласка, надішліть список предметів та посилань на їх пари в форматі:\n\nДисципліна1 - Посилання1\nДисципліна2 - Посилання2", reply_markup=BackKb('MainMenu','Admin', id_group))
             return
 
         data = await state.get_data()
@@ -732,7 +731,7 @@ async def CheckLinks(message: Message, state: FSMContext) -> None:
             except Exception as e:
                 await message.answer(f"Сталася помилка при збереженні даних: <code>{str(e)}</code>")
         else:
-            await message.answer("Введені вами дані не відповідають вказаному формату. Будь ласка, спробуйте знову", reply_markup=BackKb('MainMenu','Admin'))
+            await message.answer("Введені вами дані не відповідають вказаному формату. Будь ласка, спробуйте знову", reply_markup=BackKb('MainMenu','Admin', id_group))
     except Exception as e:
         await message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 22</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -740,12 +739,12 @@ async def CheckLinks(message: Message, state: FSMContext) -> None:
 async def SetEmails(call: CallbackQuery, state: FSMContext) -> None:
     try:
         parts = call.data.split('_')
-        _, group_id = parts
+        _, id_group = parts
         
         await state.set_state(Form.Emails)
-        await state.update_data(id_group=group_id)
+        await state.update_data(id_group=id_group)
         await call.message.delete()
-        await call.message.answer("Окей. Відправте список дисциплін та пошти викладачів, які їх ведуть. Будь ласка, слідуйте наступному формату:\n\nДисципліна1 - Пошта1\nДисципліна2 - Пошта2", reply_markup=BackKb('MainMenu','Admin'))
+        await call.message.answer("Окей. Відправте список дисциплін та пошти викладачів, які їх ведуть. Будь ласка, слідуйте наступному формату:\n\nДисципліна1 - Пошта1\nДисципліна2 - Пошта2", reply_markup=BackKb('MainMenu','Admin', id_group))
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 23</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -753,7 +752,7 @@ async def SetEmails(call: CallbackQuery, state: FSMContext) -> None:
 async def CheckEmails(message: Message, state: FSMContext) -> None:
     try:
         if not message.text:
-            await message.answer("Будь ласка, надішліть список предметів та посилань на їх пари в форматі:\n\nДисципліна1 - Пошта1\nДисципліна2 - Пошта2", reply_markup=BackKb('MainMenu','Admin'))
+            await message.answer("Будь ласка, надішліть список предметів та посилань на їх пари в форматі:\n\nДисципліна1 - Пошта1\nДисципліна2 - Пошта2", reply_markup=BackKb('MainMenu','Admin', id_group))
             return
         text_message = message.text
 
@@ -777,7 +776,7 @@ async def CheckEmails(message: Message, state: FSMContext) -> None:
             except Exception as e:
                 await message.answer(f"Виникла помилка при збереженні данних: {str(e)}")
         else:
-            await message.answer("Введені вами дані не відповідають формату 'Текст - Email'. Будь ласка, спробуйте знову.", reply_markup=BackKb('MainMenu','Admin'))
+            await message.answer("Введені вами дані не відповідають формату 'Текст - Email'. Будь ласка, спробуйте знову.", reply_markup=BackKb('MainMenu','Admin', id_group))
     except Exception as e:
         await message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 24</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -802,7 +801,7 @@ async def GetLinks(call: CallbackQuery) -> None:
 
         is_valid, formatted_message = format_message_with_bold(lessons)
 
-        await call.message.answer(f"<b>Посилання на пари:</b>\n\n{formatted_message}", reply_markup=BackKb('MainMenu', 'User'))
+        await call.message.answer(f"<b>Посилання на пари:</b>\n\n{formatted_message}", reply_markup=BackKb('MainMenu', 'User', id_group))
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 26</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -818,7 +817,7 @@ async def GetEmails(call: CallbackQuery, state: FSMContext) -> None:
 
         is_valid, formatted_message = format_and_check_message(emails)
 
-        await call.message.answer(f"<b>Пошти викладачів:</b>\n\n{formatted_message}", reply_markup=BackKb('MainMenu', 'User'))
+        await call.message.answer(f"<b>Пошти викладачів:</b>\n\n{formatted_message}", reply_markup=BackKb('MainMenu', 'User', id_group))
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 27</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
         
@@ -827,11 +826,11 @@ async def Back(call: CallbackQuery, state: FSMContext) -> None:
     try:
         parts = call.data.split('_')
 
-        _, action, type_user = parts
+        _, action, type_user, group_id = parts
         await call.message.delete()
         
-        data = await state.get_data()
-        group_id = data.get('id_group')
+        """data = await state.get_data()
+        group_id = data.get('id_group')"""
 
         if action == "WeekSelection":
             if type_user == 'Admin':
@@ -848,6 +847,65 @@ async def Back(call: CallbackQuery, state: FSMContext) -> None:
                 await call.message.answer("Ви повернулись у головне меню", reply_markup=StartKeyboard())
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 28</b>. Задля її усунення зверніться будь ласка до @Zakhiel")        
+
+@form_router.callback_query(F.data.startswith("ChangeAdmin_"))
+async def ChangeAdmin(call: CallbackQuery, state: FSMContext):
+    parts = call.data.split('_')
+    _, group_id = parts
+
+    print(group_id)
+
+    await call.message.delete()
+    await state.update_data(group_id=group_id)
+
+    await state.set_state(Form.ChangeAdmin)
+    await call.message.answer("Перешліть повідомлення від користувача, якого Ви хочете назначити адміністратором", reply_markup=BackKb('MainMenu', 'Admin', group_id))
+
+@form_router.message(Form.ChangeAdmin)
+async def ConfirmChangeAdmin(message: Message, state: FSMContext):
+    if not message.forward_from:
+        await message.answer("Це повідомлення не є форвардом від користувача. Будь ласка, перешліть повідомлення від користувача")
+        return
+
+    if message.forward_from.is_bot or message.forward_from.id <= 0:
+        await message.answer("Це повідомлення переслане не від користувача. Будь ласка, перешліть повідомлення від користувача")
+        return
+    
+    id_user = message.forward_from.id
+    name_user = message.forward_from.full_name
+    data = await state.get_data()
+    id_group = data.get("group_id")
+    
+    await state.update_data(id_new_admin=id_user)
+
+    await message.answer(f"Ви точно впевнені, що бажаєте передати права адміністратора користувачу <b>{name_user}</b>?", 
+                         reply_markup=ChangeAdminConfirmation(id_group))
+
+@form_router.callback_query(F.data.startswith("ConfirmChange_") | F.data.startswith("CancelChange_"))
+async def GoodChangeAdmin(call: CallbackQuery, state: FSMContext):
+    parts = call.data.split('_')
+    _, id_group = parts
+    
+    await call.message.delete()
+    data = await state.get_data()
+    id_new_admin = data.get("id_new_admin")
+
+    print(f"{id_group}, {id_new_admin}")
+
+    if call.data.startswith("ConfirmChange_"):
+
+        if id_new_admin and id_group:
+            cursor.execute('''UPDATE KNEU SET admin_group = ? WHERE id = ?''', (id_new_admin, id_group))
+            conn.commit()
+            await call.message.answer(f"Адміністратор успішно змінений. Дякую за Вашу службу 🫡")
+        else:
+            await call.message.answer("Сталася помилка під час зміни адміністратора. Перевірте, чи є ID користувача та групи.")
+    else:
+        await call.message.answer("Скасування зміни адміністратора")
+        await call.message.answer("Повертаємося до головного меню.", reply_markup=AdminKeyboard(id_group))
+
+    await state.clear()
+
 
 async def main():
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
