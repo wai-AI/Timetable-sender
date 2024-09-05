@@ -19,7 +19,8 @@ from keyboards.keyboard import(
     ConfirmationKeyboard,
     ChooseAdmin_kb,
     BackKb,
-    ChangeAdminConfirmation
+    ChangeAdminConfirmation,
+    HelpKb
 )
 
 from filters.chat_type import ChatTypeFilter
@@ -919,6 +920,13 @@ async def GoodChangeAdmin(call: CallbackQuery, state: FSMContext):
         await state.clear()
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 31</b>. Задля її усунення зверніться будь ласка до @Zakhiel")        
+
+@form_router.message(Command("help"))
+async def Help(message: Message):
+    try:
+        await message.answer("Натисніть кнопку, щоб відкрити <b>документацію</b>", reply_markup=HelpKb())
+    except Exception as e:
+        await message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 32.</b> Задля її вирішення, будь ласка, зв'яжіться з @Zakhiel")
 
 async def main():
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))

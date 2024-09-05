@@ -66,3 +66,9 @@ def ChangeAdminConfirmation(group_id: int):
          InlineKeyboardButton(text="❌ Ні, скасувати дію", callback_data=f'CancelChange_{group_id}')]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
+
+def HelpKb():
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📃 Документація", url="https://teletype.in/@w.a.i/KneuSenderGuide")]
+    ])
+    return keyboard
