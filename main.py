@@ -39,7 +39,7 @@ cursor = conn.cursor()
 
 cursor.execute("""CREATE TABLE IF NOT EXISTS KNEU (
     id                        INTEGER UNIQUE,
-    chat_name                 TEXT,  
+    chat_name                 TEXT,
     timetable_monday_lower    TEXT    DEFAULT [Розкладу на понеділок нижнього тижня ще немає],
     timetable_tuesday_lower   TEXT    DEFAULT [Розкладу на вівторок нижнього тижня ще немає],
     timetable_wednesday_lower TEXT    DEFAULT [Розкладу на середу нижнього тижня ще немає],
@@ -218,6 +218,17 @@ async def AdminMessage(message: Message) -> None:
     except Exception as e:
         await message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 3</b>. Задля її усунення зверніться будь ласка до @Zakhiel")
 
+@form_router.message(F.new_chat_title)
+async def ChangeChatNameBD(message: Message):
+    try:
+        id_chat = message.chat.id
+        chat_name = message.chat.full_name
+
+        cursor.execute('''UPDATE KNEU SET chat_name = ? WHERE id = ?''', (chat_name, id_chat,))
+        conn.commit()
+    except Exception as e:
+        await message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 3.5</b>. Задля її усунення зверніться будь ласка до @Zakhiel")
+
 @form_router.message(CommandStart(), ChatTypeFilter(chat_type = ["group", "supergroup"]))
 async def StartMessage(message: Message, state: FSMContext) -> None:
     try:
@@ -233,6 +244,7 @@ async def StartMessage(message: Message, state: FSMContext) -> None:
             return
         else:
             await message.answer("Оберіть функцію", reply_markup=StartKeyboard())
+            
     except Exception as e:
         await message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 4</b>. Задля її усунення зверніться будь ласка до @Zakhiel")
 
@@ -277,7 +289,6 @@ async def ChooseAdmin(call: CallbackQuery) -> None:
         id_user = call.from_user.id
         admin_user_name = call.from_user.full_name
         id_group = call.message.chat.id
-        print(id_user)
 
         cursor.execute('''UPDATE KNEU SET admin_group = ? WHERE id = ?''', (id_user, id_group,))
         conn.commit()
@@ -828,9 +839,6 @@ async def Back(call: CallbackQuery, state: FSMContext) -> None:
 
         _, action, type_user, group_id = parts
         await call.message.delete()
-        
-        """data = await state.get_data()
-        group_id = data.get('id_group')"""
 
         if action == "WeekSelection":
             if type_user == 'Admin':
@@ -853,8 +861,6 @@ async def ChangeAdmin(call: CallbackQuery, state: FSMContext):
     try:
         parts = call.data.split('_')
         _, group_id = parts
-
-        print(group_id)
 
         await call.message.delete()
         await state.update_data(group_id=group_id)
@@ -897,8 +903,6 @@ async def GoodChangeAdmin(call: CallbackQuery, state: FSMContext):
         await call.message.delete()
         data = await state.get_data()
         id_new_admin = data.get("id_new_admin")
-
-        print(f"{id_group}, {id_new_admin}")
 
         if call.data.startswith("ConfirmChange_"):
 
