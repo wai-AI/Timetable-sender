@@ -38,30 +38,13 @@ form_router = Router() #Роутер
 conn = sqlite3.connect("data.db")#Database
 cursor = conn.cursor()
 
-cursor.execute("""CREATE TABLE IF NOT EXISTS KNEU (
-    id                        INTEGER UNIQUE,
-    chat_name                 TEXT,
-    timetable_monday_lower    TEXT    DEFAULT [Розкладу на понеділок нижнього тижня ще немає],
-    timetable_tuesday_lower   TEXT    DEFAULT [Розкладу на вівторок нижнього тижня ще немає],
-    timetable_wednesday_lower TEXT    DEFAULT [Розкладу на середу нижнього тижня ще немає],
-    timetable_thursday_lower  TEXT    DEFAULT [Розкладу на четвер нижнього тижня ще немає],
-    timetable_friday_lower    TEXT    DEFAULT [Розкладу на п'ятницю нижнього тижня ще немає],
-    emails                    TEXT    DEFAULT [Пошти викладачів ще не додано],
-    lessons                   TEXT    DEFAULT [Посилання на пари відсутні],
-    admin_group               INTEGER,
-    timetable_monday_top      TEXT    DEFAULT [Розкладу на понеділок верхнього тижня ще немає],
-    timetable_tuesday_top     TEXT    DEFAULT [Розкладу на вівторок верхнього тижня ще немає],
-    timetable_wednesday_top   TEXT    DEFAULT [Розкладу на середу верхнього тижня ще немає],
-    timetable_thursday_top    TEXT    DEFAULT [Розкладу на четвер верхнього тижня ще немає],
-    timetable_friday_top      TEXT    DEFAULT [Розкладу на п'ятницю верхнього тижня ще немає]
-);""")
-
 class Form(StatesGroup): #Клас зі стейтами
     MondayTimetable = State()
     TuesdayTimetable = State()
     WednesdayTimetable = State()
     ThursdayTimetable = State()
     FridayTimetable = State()
+    SaturdayTimetable = State()
 
     GroupId = State()
     Links = State()
@@ -700,6 +683,80 @@ async def SetFriday(message: Message, state: FSMContext) -> None:
             await message.answer("Адміністратор не знайдений у базі даних або файл не був завантажений.")
     except Exception as e:
         await message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 20</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
+
+@form_router.callback_query(F.data.startswith('Saturday_'))
+async def SetSaturdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
+    try:
+        parts = call.data.split('_')
+
+        _, action, type_user, id_group = parts
+
+        await state.update_data(action=action)
+        await state.update_data(type_user=type_user)
+        await state.update_data(id_group=id_group)
+        await call.message.delete()
+
+        if action == 'Lower':
+            if type_user == 'Admin':
+                await state.set_state(Form.SaturdayTimetable)
+                await call.message.answer("Відправте розклад на суботу нижнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
+            elif type_user == 'User':
+                id_group = call.message.chat.id
+                cursor.execute("""SELECT timetable_saturday_lower FROM KNEU WHERE id = ?""", (id_group,))
+                result = cursor.fetchone()
+                timetable = result[0]
+
+                if timetable == "Розкладу на суботу нижнього тижня ще немає":
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
+                else:
+                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на суботу нижнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
+        elif action == "Top":
+            if type_user == 'Admin':
+                await state.set_state(Form.SaturdayTimetable)
+                await call.message.answer("Відправте розклад на суботу верхнього тижня", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
+            elif type_user == 'User':
+                id_group = call.message.chat.id
+                cursor.execute("""SELECT timetable_saturday_top FROM KNEU WHERE id = ?""", (id_group,))
+                result = cursor.fetchone()
+                timetable = result[0]
+
+                if timetable == "Розкладу на суботу верхнього тижня ще немає":
+                    await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
+                else:
+                    await call.message.answer(f'<a href="{timetable}"> </a><b>Розклад на суботу верхнього тижня</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
+    except Exception as e:
+        await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: saturday</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
+
+@form_router.message(Form.SaturdayTimetable)
+async def Setsaturday(message: Message, state: FSMContext) -> None:
+    try:
+        if not message.photo:
+            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
+            return
+        
+        path = await DownloadingPhotos(message)
+        
+        data = await state.get_data()
+        action = data.get('action')
+        id_group = data.get('id_group')
+
+        if path and id_group:
+            url = telegraph_file_upload(path)
+            await state.update_data(SaturdayTimetable=url)
+            if action == "Lower":
+                cursor.execute("""UPDATE KNEU SET timetable_saturday_lower = ? WHERE id = ?""", (url, id_group))
+                conn.commit()
+                await message.answer(f"Розклад на суботу нижнього тижня успішно збережено", reply_markup=DaysKeyboard('Lower', 'WeekSelection', 'Admin', id_group))
+            elif action == "Top":
+                cursor.execute("""UPDATE KNEU SET timetable_saturday_top = ? WHERE id = ?""", (url, id_group))
+                conn.commit()
+                await message.answer(f"Розклад на суботу верхнього тижня успішно збережено", reply_markup=DaysKeyboard('Top','WeekSelection', 'Admin', id_group))
+            else:
+                await message.answer(f"Виникла помилка")
+        else:
+            await message.answer("Адміністратор не знайдений у базі даних або файл не був завантажений.")
+    except Exception as e:
+        await message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: saturday_load</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
 @form_router.callback_query(F.data.startswith('PushLink_'))
 async def SetLinks(call: CallbackQuery, state: FSMContext) -> None:

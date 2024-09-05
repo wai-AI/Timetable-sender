@@ -27,6 +27,7 @@ def DaysKeyboard(week: str, arg: str, type_user: str, group_id: int) -> InlineKe
         [InlineKeyboardButton(text="3️⃣ Середа", callback_data=f'Wednesday_{week}_{type_user}_{group_id}')],
         [InlineKeyboardButton(text="4️⃣ Четвер", callback_data=f'Thursday_{week}_{type_user}_{group_id}')],
         [InlineKeyboardButton(text="5️⃣ П'ятниця", callback_data=f'Friday_{week}_{type_user}_{group_id}')],
+        [InlineKeyboardButton(text="6️⃣ Субота", callback_data=f'Saturday_{week}_{type_user}_{group_id}')],
         [InlineKeyboardButton(text="◀️ Назад", callback_data=f"Back_{arg}_{type_user}_{group_id}")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=kb)
