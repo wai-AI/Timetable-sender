@@ -774,12 +774,12 @@ async def SetLinks(call: CallbackQuery, state: FSMContext) -> None:
 @form_router.message(Form.Links)
 async def CheckLinks(message: Message, state: FSMContext) -> None:
     try:
+        data = await state.get_data()
+        id_group = data.get("id_group")
+
         if not message.text:
             await message.answer("Будь ласка, надішліть список предметів та посилань на їх пари в форматі:\n\nДисципліна1 - Посилання1\nДисципліна2 - Посилання2", reply_markup=BackKb('MainMenu','Admin', id_group))
             return
-
-        data = await state.get_data()
-        id_group = data.get("id_group")
 
         if not id_group:
             await message.answer("Сталася помилка: не вдалося визначити ідентифікатор групи")
@@ -820,13 +820,13 @@ async def SetEmails(call: CallbackQuery, state: FSMContext) -> None:
 @form_router.message(Form.Emails)
 async def CheckEmails(message: Message, state: FSMContext) -> None:
     try:
+        data = await state.get_data()
+        id_group = data.get("id_group")
+
         if not message.text:
             await message.answer("Будь ласка, надішліть список предметів та посилань на їх пари в форматі:\n\nДисципліна1 - Пошта1\nДисципліна2 - Пошта2", reply_markup=BackKb('MainMenu','Admin', id_group))
             return
         text_message = message.text
-
-        data = await state.get_data()
-        id_group = data.get("id_group")
 
         is_valid, formatted_message = format_and_check_message(text_message)
 
