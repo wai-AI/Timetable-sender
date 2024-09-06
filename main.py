@@ -364,15 +364,15 @@ async def SetMondayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 @form_router.message(Form.MondayTimetable)
 async def SetMonday(message: Message, state: FSMContext) -> None:
     try:
-        if not message.photo:
-            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
-            return
-        
-        path = await DownloadingPhotos(message)
-        
         data = await state.get_data()
         action = data.get('action')
         id_group = data.get('id_group')
+    
+        if not message.photo:
+            await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
+            return
+
+        path = await DownloadingPhotos(message)
 
         if path and id_group:
             url = telegraph_file_upload(path)
@@ -438,15 +438,15 @@ async def SetTuesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 @form_router.message(Form.TuesdayTimetable)
 async def SetTuesday(message: Message, state: FSMContext) -> None:
     try:
+        data = await state.get_data()
+        action = data.get('action')
+        id_group = data.get('id_group')
+
         if not message.photo:
             await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             return
         path = await DownloadingPhotos(message)
         
-        data = await state.get_data()
-        action = data.get('action')
-        id_group = data.get('id_group')
-
         if path and id_group:
             url = telegraph_file_upload(path)
             await state.update_data(TuesdayTimetable=url)
@@ -511,14 +511,14 @@ async def SetWednesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 @form_router.message(Form.WednesdayTimetable)
 async def SetWednesday(message: Message, state: FSMContext) -> None:
     try:
+        data = await state.get_data()
+        action = data.get('action')
+        id_group = data.get('id_group')
+
         if not message.photo:
             await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             return
         path = await DownloadingPhotos(message)
-        
-        data = await state.get_data()
-        action = data.get('action')
-        id_group = data.get('id_group')
 
         if path and id_group:
             url = telegraph_file_upload(path)
@@ -584,14 +584,14 @@ async def SetThursdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 @form_router.message(Form.ThursdayTimetable)
 async def SetThursday(message: Message, state: FSMContext) -> None:
     try:
+        data = await state.get_data()
+        action = data.get('action')
+        id_group = data.get('id_group')
+
         if not message.photo:
             await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             return
         path = await DownloadingPhotos(message)
-        
-        data = await state.get_data()
-        action = data.get('action')
-        id_group = data.get('id_group')
 
         if path and id_group:
             url = telegraph_file_upload(path)
@@ -657,14 +657,14 @@ async def SetFridayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 @form_router.message(Form.FridayTimetable)
 async def SetFriday(message: Message, state: FSMContext) -> None:
     try:
+        data = await state.get_data()
+        action = data.get('action')
+        id_group = data.get('id_group')
+
         if not message.photo:
             await message.answer("Будь ласка, надішліть розклад як фотографію", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             return
         path = await DownloadingPhotos(message)
-        
-        data = await state.get_data()
-        action = data.get('action')
-        id_group = data.get('id_group')
 
         if path and id_group:
             url = telegraph_file_upload(path)
@@ -730,15 +730,15 @@ async def SetSaturdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
 @form_router.message(Form.SaturdayTimetable)
 async def Setsaturday(message: Message, state: FSMContext) -> None:
     try:
+        data = await state.get_data()
+        action = data.get('action')
+        id_group = data.get('id_group')
+        
         if not message.photo:
             await message.answer("Будь ласка, надішліть розклад як фото", reply_markup=BackKb('WeekSelection', 'Admin', id_group))
             return
         
         path = await DownloadingPhotos(message)
-        
-        data = await state.get_data()
-        action = data.get('action')
-        id_group = data.get('id_group')
 
         if path and id_group:
             url = telegraph_file_upload(path)
