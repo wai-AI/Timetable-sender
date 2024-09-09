@@ -167,6 +167,8 @@ async def configure_selected_group(call: CallbackQuery, state: FSMContext):
         await state.update_data(selected_group=group_id)
         
         await call.message.answer(f"Ви обрали групу <b>{chat_name}</b>. Тепер ви можете виконувати налаштування.", reply_markup=AdminKeyboard(group_id))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 2</b>. Задля її усунення зверніться будь ласка до @Zakhiel")
 
@@ -228,6 +230,8 @@ async def ConfirmAdd(call: CallbackQuery, state: FSMContext) -> None:
         
         await state.update_data(GroupId=id_chat)
         await call.message.answer('''✅ <b>Вашу групу успішно додано до бази.</b>\n\nТепер оберіть людину, яка буде наповнювати мене актуальною інформацією про розклад занять, посилання на пари та пошти викладачів''', reply_markup=ChooseAdmin_kb())
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 7</b>. Задля її усунення зверніться будь ласка до @Zakhiel")       
 
@@ -238,6 +242,8 @@ async def decline_add(call: CallbackQuery) -> None:
         await call.message.delete()
         await call.message.answer("""<b>Вас зрозумів 🫡</b>\n\nЯк знадоблюся - Ви завжди можете додати мене назад до чату""")
         await call.bot.leave_chat(chat_id)
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 8</b>. Задля її усунення зверніться будь ласка до @Zakhiel")
 
@@ -254,6 +260,8 @@ async def ChooseAdmin(call: CallbackQuery) -> None:
 
         await call.message.answer(f"Вітаю, адміністратора обрано (<b>{admin_user_name}</b>). Перейдіть до мене в особисті повідомлення та відправте команду /configure")
         await call.bot.send_message(id_user, "Вітаю, тепер ви - адміністратор. Для налаштування бота введіть команду /configure")
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 9</b>. Задля її усунення зверніться будь ласка до @Zakhiel")
 
@@ -267,6 +275,8 @@ async def SetLinks(call: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(id_group=id_group)
         await call.message.delete()
         await call.message.answer("Окей. Відправте список предметів та посилань на їх пари. Будь ласка, слідуйте наступному формату:\n\nДисципліна1 - Посилання1\nДисципліна2 - Посилання2", reply_markup=BackKb('MainMenu','Admin', id_group))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 10</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -313,6 +323,8 @@ async def SetEmails(call: CallbackQuery, state: FSMContext) -> None:
         await state.update_data(id_group=id_group)
         await call.message.delete()
         await call.message.answer("Окей. Відправте список дисциплін та пошти викладачів, які їх ведуть. Будь ласка, слідуйте наступному формату:\n\nДисципліна1 - Пошта1\nДисципліна2 - Пошта2", reply_markup=BackKb('MainMenu','Admin', id_group))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 12</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -373,6 +385,8 @@ async def GetLinks(call: CallbackQuery) -> None:
         is_valid, formatted_message = format_message_with_bold(lessons)
 
         await call.message.answer(f"<b>Посилання на пари:</b>\n\n{formatted_message}", reply_markup=BackKb('MainMenu', 'User', id_group))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 15</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -389,6 +403,8 @@ async def GetEmails(call: CallbackQuery, state: FSMContext) -> None:
         is_valid, formatted_message = format_and_check_message(emails)
 
         await call.message.answer(f"<b>Пошти викладачів:</b>\n\n{formatted_message}", reply_markup=BackKb('MainMenu', 'User', id_group))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 16</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
         
@@ -413,6 +429,8 @@ async def Back(call: CallbackQuery, state: FSMContext) -> None:
                 await call.message.answer("Ви повернулись у головне меню", reply_markup=AdminKeyboard(group_id))
             elif type_user == 'User':
                 await call.message.answer("Ви повернулись у головне меню", reply_markup=StartKeyboard())
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 17</b>. Задля її усунення зверніться будь ласка до @Zakhiel")        
 
@@ -427,6 +445,8 @@ async def ChangeAdmin(call: CallbackQuery, state: FSMContext):
 
         await state.set_state(Form.ChangeAdmin)
         await call.message.answer("Перешліть повідомлення від користувача, якого Ви хочете назначити адміністратором", reply_markup=BackKb('MainMenu', 'Admin', group_id))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 18</b>. Задля її усунення зверніться будь ласка до @Zakhiel")        
 
@@ -477,6 +497,8 @@ async def GoodChangeAdmin(call: CallbackQuery, state: FSMContext):
             await call.message.answer("Повертаємося до головного меню.", reply_markup=AdminKeyboard(id_group))
 
         await state.clear()
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 20</b>. Задля її усунення зверніться будь ласка до @Zakhiel")        
 
@@ -484,6 +506,8 @@ async def GoodChangeAdmin(call: CallbackQuery, state: FSMContext):
 async def Help(message: Message):
     try:
         await message.answer("Натисніть кнопку, щоб відкрити <b>документацію</b>", reply_markup=HelpKb())
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 21.</b> Задля її вирішення, будь ласка, зв'яжіться з @Zakhiel")
 
@@ -495,6 +519,8 @@ async def SetTimetable(call: CallbackQuery, state: FSMContext) -> None:
 
         await call.message.delete()
         await call.message.answer("Оберіть тиждень", reply_markup=WeeksKeyboard('MainMenu', 'Admin', group_id))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 22</b>. Задля її усунення зверніться будь ласка до @Zakhiel")
 
@@ -520,6 +546,8 @@ async def SetTimetable(call: CallbackQuery, state: FSMContext) -> None:
                 await call.message.answer("Ви обрали нижній тиждень. Оберіть день, розклад якого Вас цікавить", reply_markup=DaysKeyboard('Lower', 'WeekSelection', 'User', group_id))
         else:
             await call.message.answer("Невідомий вибір. Спробуйте ще раз.")
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 23</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -567,6 +595,8 @@ async def SetMondayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                     await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
                     await call.message.answer_photo(photo, "<b>Розклад на понеділок верхнього тижня</b>", show_caption_above_media=False   , reply_markup=BackKb('WeekSelection', 'User', id_group))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 24</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -648,6 +678,8 @@ async def SetTuesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                     await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
                     await call.message.answer_photo(photo, "<b>Розклад на вівторок верхнього тижня</b>", show_caption_above_media=False, reply_markup=BackKb('WeekSelection', 'User', id_group))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 26</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -729,6 +761,8 @@ async def SetWednesdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                     await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
                     await call.message.answer_photo(photo, "<b>Розклад на середу верхнього тижня</b>", show_caption_above_media=False  , reply_markup=BackKb('WeekSelection', 'User', id_group))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 28</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -810,6 +844,8 @@ async def SetThursdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                     await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
                     await call.message.answer_photo(photo, "<b>Розклад на четвер верхнього тижня</b>", show_caption_above_media=False  , reply_markup=BackKb('WeekSelection', 'User', id_group))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 30</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -891,6 +927,8 @@ async def SetFridayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                     await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
                     await call.message.answer_photo(photo, "<b>Розклад на п'ятницю верхнього тижня</b>", show_caption_above_media=False, reply_markup=BackKb('WeekSelection', 'User', id_group))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 32</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
@@ -972,6 +1010,8 @@ async def SetSaturdayTimetable(call: CallbackQuery, state: FSMContext) -> None:
                     await call.message.answer(f'<b>{timetable}</b>', reply_markup=BackKb('WeekSelection', 'User', id_group))
                 else:
                     await call.message.answer_photo(photo, "<b>Розклад на суботу верхнього тижня</b>", show_caption_above_media=False  , reply_markup=BackKb('WeekSelection', 'User', id_group))
+    except TelegramBadRequest:
+        raise
     except Exception as e:
         await call.message.answer(f"Виникла помилка: <code>{e}</code>. <b>ID: 34</b>. Задля її усунення зверніться будь ласка до @Zakhiel")    
 
