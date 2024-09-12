@@ -7,6 +7,7 @@ import sqlite3
 import requests
 import re
 import os
+from dotenv import load_dotenv, dotenv_values
 
 from aiogram.exceptions import TelegramBadRequest
 
@@ -42,6 +43,8 @@ form_router = Router() #Роутер
 conn = sqlite3.connect("data.db")#Database
 cursor = conn.cursor()
 
+load_dotenv()
+
 class Form(StatesGroup): #Клас зі стейтами
     MondayTimetable = State()
     TuesdayTimetable = State()
@@ -56,9 +59,11 @@ class Form(StatesGroup): #Клас зі стейтами
 
     ChangeAdmin = State()
 
-with open('settings.json', 'r') as json_file: #Вигрузка з конфігу та визначення змінних
+"""with open('settings.json', 'r') as json_file: #Вигрузка з конфігу та визначення змінних
     config = json.load(json_file)
-TOKEN = config['TOKEN']
+TOKEN = config['TOKEN']"""
+
+TOKEN = os.getenv("BOT_TOKEN")
 
 def format_message_with_bold(message: str) -> str:
     pattern = r'^(.*?) - (https?://[^\s]+)$'
