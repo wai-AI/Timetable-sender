@@ -36,12 +36,10 @@ pip install -r requirements.txt
 **Third step:** Bot Configuration
 
 Create a bot through BotFather and obtain the token.
-Create a .json file in the project's root directory and add your token:
+Create a .env file in the project's root directory and add your token:
 
 ```
-{
-"BOT_TOKEN" : "your_bot_token_here"
-}
+BOT_TOKEN = "your_bot_token_here"
 ```
 
 
